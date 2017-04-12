@@ -8,11 +8,13 @@
 #       argparse
 
 from __future__ import print_function
+import matplotlib
 
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 from matplotlib.widgets import Button, RadioButtons, Slider
 import matplotlib.image as mpimg
+from matplotlib.artist import Artist
 from tkFileDialog import askopenfilename, asksaveasfilename
 import os
 import sys
@@ -41,6 +43,7 @@ class Draw_ROI(object):
         #self.fig = fig
         #self.ax = roi.ax
         self.canvas = self.fig.canvas
+        self.drawings = []
         #self.roi_guide = roi
         
         #self.img_fa = nib.load('IPMSA_CSPMV02_AP_3merged_xenc_dti_FA_resampled.nii.gz')
@@ -63,13 +66,15 @@ class Draw_ROI(object):
         self.clim = self.clim_fa
 
         self.z = 0
-        self.bg = self.ax.imshow(self.dat[:,:,self.z].T, cmap='gray', vmin=self.clim[0], vmax=self.clim[1], origin='low', interpolation='none')
+        self.bg = self.ax.imshow(self.dat[:,:,self.z].T, cmap='gray', vmin=self.clim[0], vmax=self.clim[1], origin='low', interpolation='none', animated=True)
         self.ax.axis('off')
 
         self.roi_guide_floats = [ self.roi_guide.to_floats() for z in range(self.dat_fa.shape[2]) ]
         self.roi_guide_float_default = self.roi_guide.to_floats()
-        self.roi_guide.plot()
+
         self.set_buttons()
+        #self.background = self.canvas.copy_from_bbox(self.ax.bbox)
+        self.drawings += self.roi_guide.drawings
 
         if fn_fa:
             self.read_img('FA', fn=fn_fa)
@@ -84,10 +89,33 @@ class Draw_ROI(object):
         self.clicked_button = None
         self.clicked_button_base_weight = None
 
+        self.canvas.mpl_connect('draw_event', self.draw_callback)
         self.canvas.mpl_connect('button_press_event', self.button_press_callback)
         self.canvas.mpl_connect('key_press_event', self.key_press_callback)
         self.canvas.mpl_connect('button_release_event', self.button_release_callback)
         self.canvas.mpl_connect('motion_notify_event', self.motion_notify_callback)
+
+        self.background = self.canvas.copy_from_bbox(self.ax.bbox)
+        self.roi_guide.plot()
+
+    def draw_callback(self, event=None):
+        #print('draw_callback')
+        self.background = self.canvas.copy_from_bbox(self.ax.bbox)
+        for artist in self.drawings:
+            #self.ax.draw_artist(artist)
+            self.ax.draw_artist(artist)
+        for artist in self.rois_drawings:
+            #self.ax.draw_artist(artist)
+            self.ax.draw_artist(artist)
+        self.canvas.blit(self.ax.bbox)
+
+    def draw_update(self):
+        self.canvas.restore_region(self.background)
+        for artist in self.drawings:
+            self.ax.draw_artist(artist)
+        for artist in self.rois_drawings:
+            self.ax.draw_artist(artist)
+        self.canvas.blit(self.ax.bbox)
 
     def save(self):
         '''
@@ -127,6 +155,10 @@ class Draw_ROI(object):
 
         img = nib.load(fn_in)
         dat = img.get_data()
+        if img.affine[0][0] < 0:
+            dat_swap = dat.copy()
+            for x in range(dat.shape[0]):
+                dat[x,:,:] = dat_swap[dat.shape[0]-1-x,:,:]
         if tag == 'FA':
             self.img_fa = img
             self.dat_fa = dat
@@ -187,7 +219,8 @@ class Draw_ROI(object):
                 self.rois_drawings[ind].set_data(zip(*self.rois[self.z][ind]))
             else:
                 self.rois_drawings[ind].set_data([],[])
-        self.canvas.draw()
+        #self.canvas.blit(self.ax.bbox)
+        self.draw_update()
 
     def set_buttons(self):
         '''
@@ -205,13 +238,13 @@ class Draw_ROI(object):
                 'red',
                 ]
                 
-        ax_l_ah  = plt.axes([0.39, 0.74, 0.07, 0.04])
-        ax_l_cst = plt.axes([0.28, 0.67, 0.09, 0.04])
-        ax_l_pc  = plt.axes([0.42, 0.64, 0.07, 0.04])
+        ax_l_ah  = plt.axes([0.39, 0.74, 0.08, 0.04])
+        ax_l_cst = plt.axes([0.28, 0.67, 0.10, 0.04])
+        ax_l_pc  = plt.axes([0.42, 0.64, 0.08, 0.04])
 
-        ax_r_ah  = plt.axes([0.54, 0.74, 0.07, 0.04])
-        ax_r_cst = plt.axes([0.63, 0.67, 0.09, 0.04])
-        ax_r_pc  = plt.axes([0.51, 0.64, 0.07, 0.04])
+        ax_r_ah  = plt.axes([0.53, 0.74, 0.08, 0.04])
+        ax_r_cst = plt.axes([0.62, 0.67, 0.10, 0.04])
+        ax_r_pc  = plt.axes([0.50, 0.64, 0.08, 0.04])
 
         ax_guide = plt.axes([0.15, 0.53, 0.2, 0.04])
         ax_reset = plt.axes([0.45, 0.53, 0.1, 0.04])
@@ -292,7 +325,10 @@ class Draw_ROI(object):
             self.index_button[button] = i
 
         self.rois = [ [ list() for i in range(len(self.index_button)) ] for z in range(self.dat_fa.shape[2]) ]
-        self.rois_drawings = [ self.ax.plot([], [], 's', markerfacecolor=self.button_colors[i], markeredgecolor=self.button_colors[i], alpha=0.5, markersize=5.0)[0] for i in range(len(self.rois[self.z])) ]
+        self.rois_drawings = [ Line2D([], [], linestyle='none', marker='s', markerfacecolor=self.button_colors[i], markeredgecolor=self.button_colors[i], alpha=0.5, markersize=5.0, animated=True) for i in range(len(self.rois[self.z])) ]
+        #self.rois_drawings = [ self.ax.plot([], [], 's', markerfacecolor=self.button_colors[i], markeredgecolor=self.button_colors[i], alpha=0.5, markersize=5.0)[0] for i in range(len(self.rois[self.z])) ]
+        for artist in self.rois_drawings:
+            self.ax.add_line(artist)
 
         # radio buttions
         self.radio = RadioButtons(ax_rad, ('FA', 'b0', 'DW'))
@@ -311,7 +347,9 @@ class Draw_ROI(object):
         self.clim[0] = self.slider_vmin.val
         self.clim[1] = self.slider_vmax.val
         self.bg.set_clim(*self.clim)
-        self.canvas.draw()
+        #self.canvas.draw()
+        self.canvas.blit(self.ax.bbox)
+        #self.ax.draw()
 
     def get_ind_under_point(self, event):
         '''
@@ -380,9 +418,13 @@ class Draw_ROI(object):
                         self.rois_drawings[ind].set_data(zip(*self.rois[self.z][ind]))
                     else:
                         self.rois_drawings[ind].set_data([],[])
-                    self.canvas.draw()
+                    #self.canvas.draw()
+                    #self.canvas.blit(self.ax.bbox)
+                    self.draw_update()
+
         elif event.button == 2:
             pass
+
         elif event.button == 3:
             if self.clicked_button is None:
                 return
@@ -396,7 +438,9 @@ class Draw_ROI(object):
                         self.rois_drawings[ind].set_data(zip(*self.rois[self.z][ind]))
                     else:
                         self.rois_drawings[ind].set_data([],[])
-                    self.canvas.draw()
+                    #self.canvas.draw()
+                    #self.canvas.blit(self.ax.bbox)
+                    self.draw_update()
         else:
             return
         self.clicked = None
@@ -438,6 +482,7 @@ class Draw_ROI(object):
         elif event.key == 'r':
             self.read()
         #self.canvas.draw()
+        self.canvas.blit(self.ax.bbox)
 
     def motion_notify_callback(self, event):
         'on mouse movement'
@@ -451,7 +496,9 @@ class Draw_ROI(object):
                 x, y = event.xdata - self.start_point[0], event.ydata - self.start_point[1]
 
                 self.roi_guide.update_point_from_event(self.clicked, self.backup_point[0]+x, self.backup_point[1]+y)
-                self.canvas.draw()
+                #self.canvas.draw()
+                #self.canvas.blit(self.ax.bbox)
+                self.draw_update()
 
             # from matplotlib example: is the following better?
             #self.canvas.restore_region(self.background)
@@ -471,7 +518,9 @@ class Draw_ROI(object):
                         self.rois_drawings[ind].set_data(zip(*self.rois[self.z][ind]))
                     else:
                         self.rois_drawings[ind].set_data([],[])
-                    self.canvas.draw()
+                    #self.canvas.draw()
+                    #self.canvas.blit(self.ax.bbox)
+                    self.draw_update()
 
         elif event.button == 2:
             # fov
@@ -479,6 +528,8 @@ class Draw_ROI(object):
             axis = self.ax.axis()
             self.ax.axis( [axis[0]-x, axis[1]-x, axis[2]-y, axis[3]-y] )
             self.canvas.draw()
+            #self.canvas.blit(self.ax.bbox)
+            #self.draw_update()
             self.start_point = event.xdata, event.ydata
 
         elif event.button == 3:
@@ -489,7 +540,9 @@ class Draw_ROI(object):
                     point.x += x
                     point.y += y
                 self.roi_guide.update_all()
-                self.canvas.draw()
+                #self.canvas.draw()
+                #self.canvas.blit(self.ax.bbox)
+                self.draw_update()
                 self.start_point = event.xdata, event.ydata
             else:
                 if not self.index_button.has_key(self.clicked_button):
@@ -503,7 +556,9 @@ class Draw_ROI(object):
                         self.rois_drawings[ind].set_data(zip(*self.rois[self.z][ind]))
                     else:
                         self.rois_drawings[ind].set_data([],[])
-                    self.canvas.draw()
+                    #self.canvas.draw()
+                    #self.canvas.blit(self.ax.bbox)
+                    self.draw_update()
 
         else:
             return
@@ -513,6 +568,8 @@ class Draw_ROI(object):
     set button text to normal
 '''
         button.label.set_fontweight(self.clicked_button_base_weight)
+        text = button.label.get_text()
+        button.label.set_text(text[1:-1])
         self.clicked_button_base_weight = None
         self.clicked_button = None
 
@@ -526,10 +583,16 @@ class Draw_ROI(object):
             if self.clicked_button is not None:
                 self.unset_button_click(self.clicked_button)
 
-            button.label.set_fontweight(self.clicked_button_base_weight)
+            #button.label.set_fontweight(self.clicked_button_base_weight)
             self.clicked_button_base_weight = button.label.get_fontweight()
             button.label.set_fontweight(1000)
+            text = button.label.get_text()
+            button.label.set_text('[%s]' % text)
             self.clicked_button = button
+
+        #button.ax.draw_artist(button)
+        self.canvas.blit(button.ax.bbox)
+        #self.canvas.draw()
 
     def button_click_callback_prev(self, event=None):
         '''
@@ -559,6 +622,8 @@ class Draw_ROI(object):
             else:
                 self.rois_drawings[ind].set_data([],[])
         self.canvas.draw()
+        #self.canvas.blit(self.ax.bbox)
+        #self.draw_update()
 
     # duplicate. TODO: merge prev and next
     def button_click_callback_next(self, event=None):
@@ -589,6 +654,8 @@ class Draw_ROI(object):
             else:
                 self.rois_drawings[ind].set_data([],[])
         self.canvas.draw()
+        #self.canvas.blit(self.ax.bbox)
+        #self.draw_update()
 
     def reset_roi_guide(self, event=None):
         '''
@@ -596,7 +663,9 @@ class Draw_ROI(object):
 '''
         self.roi_guide.from_floats(self.roi_guide_float_default)
         self.roi_guide.update_all()
-        self.canvas.draw()
+        #self.canvas.draw()
+        #self.canvas.blit(self.ax.bbox)
+        self.draw_update()
 
     def change_bg(self, label):
         '''
@@ -632,6 +701,8 @@ class Draw_ROI(object):
         self.cid_vmax = self.slider_vmax.on_changed(self.update_clim)
 
         self.canvas.draw()
+        #self.canvas.blit(self.ax.bbox)
+        #self.draw_update()
 
 if __name__ == '__main__':
     fn_fa = None
@@ -644,7 +715,7 @@ if __name__ == '__main__':
     if len(sys.argv) > 3:
         fn_dw = sys.argv[3]
 
-    #plt.ion() # for debug
+    plt.ion() # for debug
     draw = Draw_ROI(fn_fa, fn_b0, fn_dw)
     plt.show()
 
