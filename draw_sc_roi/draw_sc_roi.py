@@ -715,7 +715,7 @@ if __name__ == '__main__':
     if len(sys.argv) > 3:
         fn_dw = sys.argv[3]
 
-    plt.ion() # for debug
+    #plt.ion() # for debug
     draw = Draw_ROI(fn_fa, fn_b0, fn_dw)
     plt.show()
 
