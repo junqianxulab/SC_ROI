@@ -21,16 +21,9 @@ import nibabel as nib
 import sc_roi
 
 class Draw_ROI(object):
-    """
-    Key-bindings
-
-      't' toggle vertex markers on and off.  When vertex markers are on,
-          you can move them, delete them
-      'd' delete the vertex under point
-      'i' insert a vertex at point.  You must be within epsilon of the
-          line connecting two existing vertices
-
-    """
+    '''
+    Draw Spinal Cord ROI
+    '''
 
     #showverts = True
     epsilon = 5  # max pixel distance to count as a vertex hit
@@ -39,7 +32,8 @@ class Draw_ROI(object):
         #figsize = (7.5, 10) if 'linux' in sys.platform else (6, 8)
         figsize = (6, 8)
         self.fig, (self.ax1, self.ax) = plt.subplots(2, 1, figsize=figsize)
-        example = mpimg.imread('example_image.png')
+        dirname = os.path.dirname(os.path.realpath(__file__))
+        example = mpimg.imread(os.path.join(dirname, 'example_image.png'))
         self.ax1.imshow(example)
         self.ax1.axis([15.5, 319.5, 225.5, -9.5])
         self.ax1.axis('off')
