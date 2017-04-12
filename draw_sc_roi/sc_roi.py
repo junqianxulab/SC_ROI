@@ -1,4 +1,5 @@
 import numpy as np
+from matplotlib.lines import Line2D
 
 class Point2D:
     def __init__(self, x, y, parent):
@@ -62,6 +63,8 @@ class Roi_guide:
                 self.j2d: [self.j],
                 }
         self.set_affect()
+        self.drawings = []
+        self.set_drawings()
 
     def to_floats(self):
         return [
@@ -218,7 +221,96 @@ class Roi_guide:
     def is_on(self, x, y):
         pass
 
+    def set_drawings(self):
+        lw = 3.0
+        self.ab = Line2D([self.a.x,   self.b.x],  [self.a.y,    self.b.y],   linestyle='-', color='coral', lw=lw, animated=True)
+        self.fc = Line2D([self.f2d.x, self.c.x],  [self.f2d.y,  self.c.y],   linestyle='-', color='coral', lw=lw, animated=True)
+        self.fd = Line2D([self.f2d.x, self.d.x],  [self.f2d.y,  self.d.y],   linestyle='-', color='coral', lw=lw, animated=True)
+        self.fe = Line2D([self.f2d.x, self.e.x],  [self.f2d.y,  self.e.y],   linestyle='-', color='coral', lw=lw, animated=True)
+        self.gh = Line2D([self.g2d.x, self.h2d.x], [self.g2d.y, self.h2d.y], linestyle='-', color='coral', lw=lw, animated=True)
+        self.ij = Line2D([self.i2d.x, self.j2d.x], [self.i2d.y, self.j2d.y], linestyle='-', color='coral', lw=lw, animated=True)
+
+        picker=2
+        self.point_a = Line2D([self.a.x],   [self.a.y],   linestyle='none', marker='o', color='b', animated=True)
+        self.point_b = Line2D([self.b.x],   [self.b.y],   linestyle='none', marker='o', color='b', animated=True)
+        self.point_c = Line2D([self.c.x],   [self.c.y],   linestyle='none', marker='o', color='b', animated=True)
+        self.point_d = Line2D([self.d.x],   [self.d.y],   linestyle='none', marker='o', color='b', animated=True)
+        self.point_e = Line2D([self.e.x],   [self.e.y],   linestyle='none', marker='o', color='b', animated=True)
+        self.point_f = Line2D([self.f2d.x], [self.f2d.y], linestyle='none', marker='o', color='b', animated=True)
+        self.point_g = Line2D([self.g2d.x], [self.g2d.y], linestyle='none', marker='o', color='b', animated=True)
+        self.point_h = Line2D([self.h2d.x], [self.h2d.y], linestyle='none', marker='o', color='b', animated=True)
+        self.point_i = Line2D([self.i2d.x], [self.i2d.y], linestyle='none', marker='o', color='b', animated=True)
+        self.point_j = Line2D([self.j2d.x], [self.j2d.y], linestyle='none', marker='o', color='b', animated=True)
+
+        self.depend_on[self.ab] = [self.a, self.b]
+        self.depend_on[self.fc] = [self.f, self.c]
+        self.depend_on[self.fd] = [self.f, self.d]
+        self.depend_on[self.fe] = [self.f, self.e]
+        self.depend_on[self.gh] = [self.g, self.h]
+        self.depend_on[self.ij] = [self.i, self.j]
+
+        self.depend_on[self.point_a] = [self.a]
+        self.depend_on[self.point_b] = [self.b]
+        self.depend_on[self.point_c] = [self.c]
+        self.depend_on[self.point_d] = [self.d]
+        self.depend_on[self.point_e] = [self.e]
+        self.depend_on[self.point_f] = [self.f]
+        self.depend_on[self.point_g] = [self.g]
+        self.depend_on[self.point_h] = [self.h]
+        self.depend_on[self.point_i] = [self.i]
+        self.depend_on[self.point_j] = [self.j]
+
+        if False:
+            self.ax.text(self.a.x, self.a.y, 'a')
+            self.ax.text(self.b.x, self.b.y, 'b')
+            self.ax.text(self.c.x, self.c.y, 'c')
+            self.ax.text(self.d.x, self.d.y, 'd')
+            self.ax.text(self.e.x, self.e.y, 'e')
+            self.ax.text(self.f2d.x, self.f2d.y, 'f')
+            self.ax.text(self.g2d.x, self.g2d.y, 'g')
+            self.ax.text(self.h2d.x, self.h2d.y, 'h')
+            self.ax.text(self.i2d.x, self.i2d.y, 'i')
+            self.ax.text(self.j2d.x, self.j2d.y, 'j')
+
+        self.ax.axis((110, 160, 25, 55))
+        self.drawings += [
+                self.ab,
+                self.fc,
+                self.fd,
+                self.fe,
+                self.gh,
+                self.ij,
+                self.point_a,
+                self.point_b,
+                self.point_c,
+                self.point_d,
+                self.point_e,
+                self.point_f,
+                self.point_g,
+                self.point_h,
+                self.point_i,
+                self.point_j,
+                ]
+
     def plot(self):
+        self.ax.add_line(self.ab)
+        self.ax.add_line(self.fc)
+        self.ax.add_line(self.fd)
+        self.ax.add_line(self.fe)
+        self.ax.add_line(self.gh)
+        self.ax.add_line(self.ij)
+        self.ax.add_line(self.point_a)
+        self.ax.add_line(self.point_b)
+        self.ax.add_line(self.point_c)
+        self.ax.add_line(self.point_d)
+        self.ax.add_line(self.point_e)
+        self.ax.add_line(self.point_f)
+        self.ax.add_line(self.point_g)
+        self.ax.add_line(self.point_h)
+        self.ax.add_line(self.point_i)
+        self.ax.add_line(self.point_j)
+
+    def _plot(self):
         lw = 3.0
         self.ab = self.ax.plot([self.a.x,   self.b.x],  [self.a.y,    self.b.y],   '-', color='coral', lw=lw)[0]
         self.fc = self.ax.plot([self.f2d.x, self.c.x],  [self.f2d.y,  self.c.y],   '-', color='coral', lw=lw)[0]
@@ -227,7 +319,6 @@ class Roi_guide:
         self.gh = self.ax.plot([self.g2d.x, self.h2d.x], [self.g2d.y, self.h2d.y], '-', color='coral', lw=lw)[0]
         self.ij = self.ax.plot([self.i2d.x, self.j2d.x], [self.i2d.y, self.j2d.y], '-', color='coral', lw=lw)[0]
 
-        picker=2
         self.point_a = self.ax.plot(self.a.x,   self.a.y,   'o', color='b')[0]
         self.point_b = self.ax.plot(self.b.x,   self.b.y,   'o', color='b')[0]
         self.point_c = self.ax.plot(self.c.x,   self.c.y,   'o', color='b')[0]
@@ -270,6 +361,24 @@ class Roi_guide:
             self.ax.text(self.j2d.x, self.j2d.y, 'j')
 
         self.ax.axis((110, 160, 25, 55))
+        self.drawings += [
+                self.ab,
+                self.fc,
+                self.fd,
+                self.fe,
+                self.gh,
+                self.ij,
+                self.point_a,
+                self.point_b,
+                self.point_c,
+                self.point_d,
+                self.point_e,
+                self.point_f,
+                self.point_g,
+                self.point_h,
+                self.point_i,
+                self.point_j,
+                ]
 
     def update_line_drawing(self, line):
         if line is self.ab: line.set_data([self.a.x, self.b.x], [self.a.y, self.b.y])

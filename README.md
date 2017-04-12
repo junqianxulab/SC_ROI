@@ -1,5 +1,5 @@
 # SC_ROI
-Spinal cord ROI<sup>(#Xu)</sup> drawing tool
+Spinal cord ROI [^1] drawing tool
 
 ## Dependency
 #### Python 2.7
@@ -26,5 +26,5 @@ We don't have any fancy installation method yet.
 
 
 ## References
-<a name="Xu">[1]</a> Improved in vivo diffusion tensor imaging of human cervical spinal cord, NeuroImage, 2013
+[^1]: Xu et al., Improved in vivo diffusion tensor imaging of human cervical spinal cord, NeuroImage, 2013
 
