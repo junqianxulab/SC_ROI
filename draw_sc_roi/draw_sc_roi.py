@@ -187,7 +187,7 @@ class Draw_ROI(object):
             return
         with open(fn_in) as fin:
             line = fin.readline() # 1st line: roi names
-            if line.strip() != ','.join(self.drawing_names):
+            if line.strip()[1:] != ','.join(self.drawing_names):
                 # check roi names
                 print('Warning: roi in the save file is not the same as that in this program')
                 print('  save file:    %s' % line.strip())
