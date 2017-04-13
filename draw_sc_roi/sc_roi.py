@@ -24,20 +24,24 @@ class Point1D:
 
 
 class Roi_guide:
-    def __init__(self, ax):
+    def __init__(self, ax, shape):
         self.ax = ax
+        cx, cy = shape[0]/2, shape[1]/2
+        dx, dy = shape[0], shape[1]
 
-        self.a = Point2D(120, 42, self)
-        self.b = Point2D(150, 42, self)
-        self.c = Point2D(135, 32, self)
-        self.d = Point2D(125, 36, self)
-        self.e = Point2D(145, 36, self)
+        self.a = Point2D(cx-0.06*dx, cy-0.00*dy, self)
+        self.b = Point2D(cx+0.06*dx, cy-0.00*dy, self)
+        self.c = Point2D(cx,         cy-0.10*dy, self)
+        self.d = Point2D(cx-0.04*dx, cy-0.06*dy, self)
+        self.e = Point2D(cx+0.04*dx, cy-0.06*dy, self)
 
         self.f = Point1D(0.5, self)
         self.g = Point1D(0.5, self)
         self.h = Point1D(0.5, self)
         self.i = Point1D(0.5, self)
         self.j = Point1D(0.5, self)
+
+        self.axis = [cx-0.1*dx, cx+0.1*dx, cy-0.15*dy, cy+0.15*dy]
 
         self.create_point2d_from_1d(self.f)
         self.create_point2d_from_1d(self.g)
@@ -272,7 +276,8 @@ class Roi_guide:
             self.ax.text(self.i2d.x, self.i2d.y, 'i')
             self.ax.text(self.j2d.x, self.j2d.y, 'j')
 
-        self.ax.axis((110, 160, 25, 55))
+        #self.ax.axis((110, 160, 25, 55))
+        self.ax.axis(self.axis)
         self.drawings += [
                 self.ab,
                 self.fc,

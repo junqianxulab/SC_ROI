@@ -39,12 +39,9 @@ class Draw_ROI(object):
         self.ax1.imshow(example)
         self.ax1.axis([15.5, 319.5, 225.5, -9.5])
         self.ax1.axis('off')
-        self.roi_guide = sc_roi.Roi_guide(self.ax)
-        #self.fig = fig
-        #self.ax = roi.ax
+        #self.roi_guide = sc_roi.Roi_guide(self.ax)
         self.canvas = self.fig.canvas
         self.drawings = []
-        #self.roi_guide = roi
         
         #self.img_fa = nib.load('IPMSA_CSPMV02_AP_3merged_xenc_dti_FA_resampled.nii.gz')
         #self.img_b0 = nib.load('IPMSA_CSPMV02_AP_3merged_xenc_b0_resampled.nii.gz')
@@ -69,12 +66,7 @@ class Draw_ROI(object):
         self.bg = self.ax.imshow(self.dat[:,:,self.z].T, cmap='gray', vmin=self.clim[0], vmax=self.clim[1], origin='low', interpolation='none', animated=True)
         self.ax.axis('off')
 
-        self.roi_guide_floats = [ self.roi_guide.to_floats() for z in range(self.dat_fa.shape[2]) ]
-        self.roi_guide_float_default = self.roi_guide.to_floats()
-
         self.set_buttons()
-        #self.background = self.canvas.copy_from_bbox(self.ax.bbox)
-        self.drawings += self.roi_guide.drawings
 
         if fn_fa:
             self.read_img('FA', fn=fn_fa)
@@ -82,6 +74,11 @@ class Draw_ROI(object):
             self.read_img('b0', fn=fn_b0)
         if fn_dw:
             self.read_img('DW', fn=fn_dw)
+
+        self.roi_guide = sc_roi.Roi_guide(self.ax, shape=self.dat.shape[:2])
+        self.drawings += self.roi_guide.drawings
+        self.roi_guide_floats = [ self.roi_guide.to_floats() for z in range(self.dat_fa.shape[2]) ]
+        self.roi_guide_float_default = self.roi_guide.to_floats()
 
         self.clicked = None
         self.start_point = None, None
